@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Pixel Warrior</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="main-menu" class="overlay">
+            <h1 class="game-title">MINI PIXEL WARRIOR</h1>
+            
+            <div id="map-selection">
+                <h2 class="sub-title">PILIH LOKASI PERTEMPURAN:</h2>
+                <div class="map-grid">
+                    <button class="map-btn active" data-map="map1.png">Himeji Forest</button>
+                    <button class="map-btn" data-map="map2.png">Ethernal Eden Garden</button>
+                    <button class="map-btn" data-map="map3.png">Nobunaga Castle</button>
+                    <button class="map-btn" data-map="map4.png">Ruins of Astra Temple</button>
+                </div>
+            </div>
+
+            <div class="menu-buttons">
+                <button id="start-btn" class="pixel-btn">MULAI PETUALANGAN</button>
+                <button id="options-btn" class="pixel-btn">PENGATURAN</button>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/classes.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>

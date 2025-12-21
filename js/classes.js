@@ -160,3 +160,36 @@ class Player {
         }
     }
 }
+
+class Enemy extends Player {
+    constructor({ position, sprites, color = 'red' }) {
+        super({ position, sprites });
+        this.color = color;
+        this.velocity.x = -2; // Musuh otomatis jalan ke kiri
+        this.health = 50;     // Nyawa musuh lebih kecil
+    }
+
+    // Logika AI sederhana
+    update() {
+        this.draw();
+        this.animateFrames(); // Panggil fungsi animasi
+
+        this.position.x += this.velocity.x;
+        this.position.y += this.velocity.y;
+
+        // Gravitasi
+        const groundLevel = canvas.height - 80;
+        if (this.position.y + this.height + this.velocity.y < groundLevel) {
+            this.velocity.y += 0.8;
+        } else {
+            this.velocity.y = 0;
+            this.position.y = groundLevel - this.height;
+        }
+
+        // Jika menabrak batas kiri, balik arah (patroli)
+        if (this.position.x <= 0 || this.position.x + this.width >= canvas.width) {
+            this.velocity.x *= -1;
+            this.lastDirection = this.velocity.x > 0 ? 'right' : 'left';
+        }
+    }
+}

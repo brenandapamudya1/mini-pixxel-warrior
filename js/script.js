@@ -8,6 +8,7 @@ const mapButtons = document.querySelectorAll('.map-btn');
 let selectedMapSrc = 'map1.png'; // Default map
 let backgroundSprite;
 let player;
+let enemies = [];
 
 // Objek untuk memantau tombol yang ditekan
 const keys = {
@@ -94,7 +95,6 @@ function animate() {
     }
 }
 
-// 4. Event Listeners Keyboard
 window.addEventListener('keydown', (event) => {
     switch (event.key) {
         case 'd': 
@@ -109,9 +109,6 @@ window.addEventListener('keydown', (event) => {
             break;
         case 'k': // Serang
             if (player) player.switchSprite('attack');
-            break;
-        case 'h': // TEST: Tekan H untuk mengurangi nyawa
-            if (player) player.takeDamage(10);
             break;
     }
 });

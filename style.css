@@ -124,3 +124,39 @@ body {
 .map-btn:hover {
     background: #444;
 }
+
+/* Tampilan HUD / UI Layer */
+#ui-layer {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    z-index: 5;
+    pointer-events: none; /* Klik akan tembus ke game */
+}
+
+.health-container {
+    width: 350px;
+}
+
+.health-label {
+    color: #ffd700; /* Warna Emas */
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    text-shadow: 3px 3px #000;
+    font-weight: bold;
+}
+
+.health-bar-bg {
+    width: 100%;
+    height: 25px;
+    background-color: #333;
+    border: 4px solid #fff;
+    box-shadow: 4px 4px 0px #000;
+}
+
+.health-bar-fill {
+    width: 100%; /* Full nyawa */
+    height: 100%;
+    background-color: #2ecc71; /* Hijau */
+    transition: width 0.4s ease-in-out, background-color 0.4s;
+}

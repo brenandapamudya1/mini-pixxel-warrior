@@ -166,7 +166,7 @@ class Enemy extends Player {
         super({ position, sprites });
         this.color = color;
         this.velocity.x = -2; // Musuh otomatis jalan ke kiri
-        this.health = 50;     // Nyawa musuh lebih kecil
+        this.health = 100;     // Nyawa musuh lebih kecil
     }
 
     // Logika AI sederhana

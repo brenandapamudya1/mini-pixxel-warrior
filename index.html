@@ -15,6 +15,27 @@
                     <div id="player-health" class="health-bar-fill"></div>
                 </div>
             </div>
+
+            <div class="health-container" style="position: absolute; right: 30px; top: 0; text-align: right;">
+                <div class="health-label">ENEMY</div>
+                <div class="health-bar-bg">
+                    <div id="enemy-health" class="health-bar-fill" style="background-color: #e74c3c; width: 100%;"></div>
+                </div>
+            </div>
+
+            <div id="game-result" style="
+                position: absolute; 
+                color: white; 
+                display: none; 
+                align-items: center; 
+                justify-content: center; 
+                top: 0; right: 0; bottom: 0; left: 0; 
+                font-size: 4rem; 
+                text-shadow: 5px 5px #000;
+                font-weight: bold;
+                z-index: 10;">
+                TIE
+            </div>
         </div>
 
         <div id="main-menu" class="overlay">

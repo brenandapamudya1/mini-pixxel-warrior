@@ -5,17 +5,12 @@ class Sprite {
         this.loaded = false;
         this.image.onload = () => {
             this.loaded = true;
-            console.log("Gambar berhasil dimuat:", imageSrc);
-        };
-        this.image.onerror = () => {
-            console.error("Gagal memuat gambar di:", imageSrc);
         };
         this.image.src = imageSrc;
     }
 
     draw() {
         if (!this.loaded) return;
-        // Memaksa gambar ditarik sesuai ukuran canvas 1280x720
         ctx.drawImage(
             this.image, 
             this.position.x, 
@@ -41,12 +36,16 @@ class Player {
         this.framesHold = 8;
         this.lastDirection = 'right';
 
-        // --- PENGATURAN UKURAN (SIZE) ---
         this.width = 256; 
         this.height = 256;
-        
-        // Perbaikan typo dari 'healt' menjadi 'health'
-        this.health = 100;
+        this.healt = 100;
+
+        this.isAttacking = false;
+        this.attackBox = {
+            position: { x: this.position.x, y: this.position.y },
+            width: 150, // Jangkauan pedang
+            height: 50
+        };
 
         for (const sprite in this.sprites) {
             this.sprites[sprite].image = new Image();
@@ -64,7 +63,6 @@ class Player {
         const frameHeight = this.image.height;
 
         ctx.save();
-
         if (this.lastDirection === 'left') {
             ctx.scale(-1, 1);
             ctx.drawImage(
@@ -91,32 +89,45 @@ class Player {
                 this.height
             );
         }
-
         ctx.restore();
     }
 
-    // Fungsi untuk mengurangi nyawa dan update UI
-    takeDamage(amount) {
-        this.health -= amount;
-        if (this.health < 0) this.health = 0;
-
-        // Update element bar di index.html
-        const healthBarElement = document.getElementById('player-health');
-        if (healthBarElement) {
-            healthBarElement.style.width = this.health + '%';
-            
-            // Perubahan warna bar berdasarkan sisa nyawa
-            if (this.health < 30) {
-                healthBarElement.style.backgroundColor = '#e74c3c'; // Merah
-            } else if (this.health < 60) {
-                healthBarElement.style.backgroundColor = '#f1c40f'; // Kuning
+    // Logika pergantian frame gambar (Animasi)
+    animateFrames() {
+        this.framesElapsed++;
+        if (this.framesElapsed % this.framesHold === 0) {
+            if (this.framesCurrent < this.framesMax - 1) {
+                this.framesCurrent++;
+            } else {
+                this.framesCurrent = 0;
             }
         }
     }
 
+    attack() {
+        this.switchSprite('attack');
+        this.isAttacking = true;
+        // Hitbox aktif hanya sebentar saat menebas
+        setTimeout(() => {
+            this.isAttacking = false;
+        }, 100); 
+    }
+
+    takeDamage(amount, barId) {
+        this.health -= amount;
+        if (this.health < 0) this.health = 0;
+
+        const healthBarElement = document.getElementById(barId);
+        if (healthBarElement) {
+            healthBarElement.style.width = this.health + '%';
+            if (this.health < 30) healthBarElement.style.backgroundColor = '#e74c3c';
+            else if (this.health < 60) healthBarElement.style.backgroundColor = '#f1c40f';
+        }
+    }
+
     switchSprite(spriteName) {
-        // Jangan ganti jika sedang animasi attack belum selesai
-        if (this.image === this.sprites.attack.image && 
+        if (!this.sprites[spriteName]) return;
+        if (this.sprites.attack && this.image === this.sprites.attack.image && 
             this.framesCurrent < this.sprites.attack.framesMax - 1) return;
 
         if (this.image === this.sprites[spriteName].image) return;
@@ -128,17 +139,13 @@ class Player {
 
     update() {
         this.draw();
+        this.animateFrames();
         
-        this.framesElapsed++;
-        if (this.framesElapsed % this.framesHold === 0) {
-            if (this.framesCurrent < this.framesMax - 1) {
-                this.framesCurrent++;
-            } else {
-                this.framesCurrent = 0;
-            }
-        }
+        // Update posisi Hitbox (mengikuti arah hadap)
+        this.attackBox.position.x = this.position.x + (this.lastDirection === 'right' ? 100 : -50);
+        this.attackBox.position.y = this.position.y + 100;
 
-        // --- LOGIKA BATAS MAP (BOUNDARY) ---
+        // Batas Map
         if (this.position.x + this.velocity.x < 0) {
             this.position.x = 0;
             this.velocity.x = 0;
@@ -162,34 +169,52 @@ class Player {
 }
 
 class Enemy extends Player {
-    constructor({ position, sprites, color = 'red' }) {
+    constructor({ position, sprites }) {
         super({ position, sprites });
-        this.color = color;
-        this.velocity.x = -2; // Musuh otomatis jalan ke kiri
-        this.health = 100;     // Nyawa musuh lebih kecil
+        this.health = 100; // Samakan dengan player
+        this.speed = 2.5;
     }
 
-    // Logika AI sederhana
-    update() {
+    // Update Enemy sekarang butuh 'target' (yaitu player) untuk AI mengejar
+    update(target) {
         this.draw();
-        this.animateFrames(); // Panggil fungsi animasi
+        this.animateFrames();
+
+        // Update Attackbox Enemy
+        this.attackBox.position.x = this.position.x + (this.lastDirection === 'right' ? 100 : -50);
+        this.attackBox.position.y = this.position.y + 100;
+
+        if (target) {
+            // LOGIKA AI: Mengejar Player
+            const distanceX = target.position.x - this.position.x;
+
+            // Jika jarak jauh (> 80px), lari mendekat
+            if (Math.abs(distanceX) > 80) {
+                this.velocity.x = distanceX > 0 ? this.speed : -this.speed;
+                this.lastDirection = distanceX > 0 ? 'right' : 'left';
+                this.switchSprite('run');
+            } else {
+                // Jika sudah dekat, berhenti dan serang
+                this.velocity.x = 0;
+                this.switchSprite('attack');
+                
+                // Beri jeda serangan AI agar tidak terlalu curang
+                if (!this.isAttacking) {
+                    this.isAttacking = true;
+                    setTimeout(() => { this.isAttacking = false; }, 1000); 
+                }
+            }
+        }
 
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
 
-        // Gravitasi
         const groundLevel = canvas.height - 80;
         if (this.position.y + this.height + this.velocity.y < groundLevel) {
             this.velocity.y += 0.8;
         } else {
             this.velocity.y = 0;
             this.position.y = groundLevel - this.height;
-        }
-
-        // Jika menabrak batas kiri, balik arah (patroli)
-        if (this.position.x <= 0 || this.position.x + this.width >= canvas.width) {
-            this.velocity.x *= -1;
-            this.lastDirection = this.velocity.x > 0 ? 'right' : 'left';
         }
     }
 }

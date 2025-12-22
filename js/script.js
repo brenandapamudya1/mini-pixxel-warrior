@@ -5,7 +5,7 @@ const uiLayer = document.getElementById('ui-layer'); // Ambil elemen UI
 const startBtn = document.getElementById('start-btn');
 const mapButtons = document.querySelectorAll('.map-btn');
 
-let selectedMapSrc = 'map1.png'; // Default map
+let selectedMapSrc = 'map1.png';
 let backgroundSprite;
 let player;
 let enemies = [];

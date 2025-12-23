@@ -7,7 +7,6 @@ class Sprite {
             this.loaded = true;
         };
         this.image.src = imageSrc;
-        this.dead = false;
     }
 
     draw() {
@@ -39,12 +38,13 @@ class Player {
 
         this.width = 256; 
         this.height = 256;
-        this.healt = 100;
+        this.health = 100; // Sudah diperbaiki dari 'healt'
+        this.dead = false;
 
         this.isAttacking = false;
         this.attackBox = {
             position: { x: this.position.x, y: this.position.y },
-            width: 150, // Jangkauan pedang
+            width: 150,
             height: 50
         };
 
@@ -93,10 +93,10 @@ class Player {
         ctx.restore();
     }
 
-    // Logika pergantian frame gambar (Animasi)
     animateFrames() {
         this.framesElapsed++;
         if (this.framesElapsed % this.framesHold === 0) {
+            // Logika agar animasi DEAD berhenti di frame terakhir
             if (this.image === this.sprites.dead.image) {
                 if (this.framesCurrent < this.sprites.dead.framesMax - 1) {
                     this.framesCurrent++;
@@ -113,16 +113,16 @@ class Player {
     }
 
     attack() {
+        if (this.dead) return;
         this.switchSprite('attack');
         this.isAttacking = true;
-        // Hitbox aktif hanya sebentar saat menebas
         setTimeout(() => {
             this.isAttacking = false;
         }, 100); 
     }
 
     takeDamage(amount, barId) {
-        if (this.dead) return; // Jika sudah mati, tidak bisa terkena damage lagi
+        if (this.dead) return;
 
         this.health -= amount;
         
@@ -143,20 +143,20 @@ class Player {
     }
 
     switchSprite(spriteName) {
+        // Jika sudah masuk animasi mati, jangan ganti ke animasi lain
         if (this.image === this.sprites.dead.image) {
             if (this.framesCurrent === this.sprites.dead.framesMax - 1) this.dead = true;
             return;
         }
 
-        // Jika sedang animasi Hurt, jangan ganti dulu
+        // Jangan potong animasi serangan atau terluka jika belum selesai
+        if (this.image === this.sprites.attack.image && 
+            this.framesCurrent < this.sprites.attack.framesMax - 1) return;
+
         if (this.image === this.sprites.hurt.image && 
             this.framesCurrent < this.sprites.hurt.framesMax - 1) return;
 
-        // Jika sedang animasi Attack, jangan ganti dulu
-        if (this.sprites.attack && this.image === this.sprites.attack.image && 
-            this.framesCurrent < this.sprites.attack.framesMax - 1) return;
-
-        if (this.image === this.sprites[spriteName].image) return;
+        if (!this.sprites[spriteName] || this.image === this.sprites[spriteName].image) return;
 
         this.image = this.sprites[spriteName].image;
         this.framesMax = this.sprites[spriteName].framesMax;
@@ -167,10 +167,12 @@ class Player {
         this.draw();
         this.animateFrames();
         
-        // Update posisi Hitbox (mengikuti arah hadap)
-        this.attackBox.position.x = this.position.x + (this.lastDirection === 'right' ? 100 : -50);
-        this.attackBox.position.y = this.position.y + 100;
+        if (!this.dead) {
+            this.attackBox.position.x = this.position.x + (this.lastDirection === 'right' ? 100 : -50);
+            this.attackBox.position.y = this.position.y + 100;
+        }
 
+        // Cegah pergerakan jika mati
         if (this.dead) {
             this.velocity.x = 0;
         }
@@ -201,39 +203,44 @@ class Player {
 class Enemy extends Player {
     constructor({ position, sprites }) {
         super({ position, sprites });
-        this.health = 100; // Samakan dengan player
+        this.health = 100;
         this.speed = 2.5;
     }
 
-    // Update Enemy sekarang butuh 'target' (yaitu player) untuk AI mengejar
     update(target) {
         this.draw();
         this.animateFrames();
 
-        // Update Attackbox Enemy
-        this.attackBox.position.x = this.position.x + (this.lastDirection === 'right' ? 100 : -50);
-        this.attackBox.position.y = this.position.y + 100;
+        if (this.dead) {
+            this.velocity.x = 0;
+        } else if (target && !target.dead) {
+            // Update Attackbox
+            this.attackBox.position.x = this.position.x + (this.lastDirection === 'right' ? 100 : -50);
+            this.attackBox.position.y = this.position.y + 100;
 
-        if (target) {
-            // LOGIKA AI: Mengejar Player
+            // Logika AI Mengejar
             const distanceX = target.position.x - this.position.x;
 
-            // Jika jarak jauh (> 80px), lari mendekat
             if (Math.abs(distanceX) > 80) {
                 this.velocity.x = distanceX > 0 ? this.speed : -this.speed;
                 this.lastDirection = distanceX > 0 ? 'right' : 'left';
                 this.switchSprite('run');
             } else {
-                // Jika sudah dekat, berhenti dan serang
                 this.velocity.x = 0;
                 this.switchSprite('attack');
                 
-                // Beri jeda serangan AI agar tidak terlalu curang
                 if (!this.isAttacking) {
                     this.isAttacking = true;
-                    setTimeout(() => { this.isAttacking = false; }, 1000); 
+                    // AI menyerang dengan jeda
+                    setTimeout(() => { 
+                        if(!this.dead) this.isAttacking = false; 
+                    }, 1500); 
                 }
             }
+        } else if (target && target.dead) {
+            // Jika player mati, enemy diam (selebrasi)
+            this.velocity.x = 0;
+            this.switchSprite('idle');
         }
 
         this.position.x += this.velocity.x;

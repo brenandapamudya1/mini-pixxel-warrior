@@ -17,7 +17,6 @@ const keys = {
 };
 
 // Fungsi Deteksi Tabrakan (AABB Collision)
-// Mengecek apakah kotak serangan (attackBox) menyentuh tubuh karakter lain
 function rectangularCollision({ rectangle1, rectangle2 }) {
     return (
         rectangle1.attackBox.position.x + rectangle1.attackBox.width >= rectangle2.position.x &&
@@ -52,7 +51,7 @@ function startGame() {
             jump: { imageSrc: './assets/images/Samurai_Commander/Jump.png', framesMax: 7 },
             attack: { imageSrc: './assets/images/Samurai_Commander/Attack_1.png', framesMax: 4 },
             hurt: { imageSrc: './assets/images/Samurai_Commander/Hurt.png', framesMax: 2 },
-            dead: { imageSrc: './assets/images/Samurai_Commander/Dead.png', framesMax: 6}
+            dead: { imageSrc: './assets/images/Samurai_Commander/Dead.png', framesMax: 6 }
         }
     });
 
@@ -63,7 +62,7 @@ function startGame() {
             run: { imageSrc: './assets/images/Samurai_Commander/Run.png', framesMax: 8 },
             attack: { imageSrc: './assets/images/Samurai_Commander/Attack_1.png', framesMax: 4 },
             hurt: { imageSrc: './assets/images/Samurai_Commander/Hurt.png', framesMax: 2 },
-            dead: { imageSrc: './assets/images/Samurai_Commander/Dead.png', framesMax: 6}
+            dead: { imageSrc: './assets/images/Samurai_Commander/Dead.png', framesMax: 6 }
         }
     });
 
@@ -76,11 +75,12 @@ function animate() {
 
     if (backgroundSprite) backgroundSprite.update();
 
-    // UPDATE PLAYER
+    // --- LOGIKA PLAYER ---
     if (player) {
-        if(!player.dead){
+        if (!player.dead) {
             player.update();    
-            player.velocity=0;
+            player.velocity.x = 0; // Reset velocity setiap frame
+
             if (keys.d.pressed) {
                 player.velocity.x = 7;
                 player.lastDirection = 'right';
@@ -93,55 +93,63 @@ function animate() {
                 player.switchSprite('idle');
             }
 
-            if (player.velocity.y < 0 || player.velocity.y > 0) {
+            // Animasi Lompat
+            if (player.velocity.y !== 0) {
                 player.switchSprite('jump');
             }
-        }
-        else{
+        } else {
+            // Player tetap update agar animasi Dead berjalan sampai frame terakhir
             player.update();
         }
     }
 
-    // UPDATE ENEMY & COLLISION DETECTION
-    if (enemy && player) {
-        // Kirim 'player' sebagai target agar AI mengejar
-        enemy.update(player);
-
-        // DETEKSI: Serangan Player mengenai Enemy
-        if (player.isAttacking && rectangularCollision({ rectangle1: player, rectangle2: enemy })) {
-            player.isAttacking = false; // Hindari damage berkali-kali dalam satu ayunan
-            enemy.takeDamage(5, 'enemy-health');
-            console.log("Player Hit Enemy!");
+    // --- LOGIKA ENEMY ---
+    if (enemy) {
+        if (!enemy.dead && !player.dead) {
+            enemy.update(player);
+        } else {
+            enemy.update(); // Tetap update untuk animasi Dead atau Idle saat menang
         }
 
-        // DETEKSI: Serangan Enemy mengenai Player
-        if (enemy.isAttacking && rectangularCollision({ rectangle1: enemy, rectangle2: player })) {
-            enemy.isAttacking = false;
-            player.takeDamage(5, 'player-health');
-            console.log("Enemy Hit Player!");
-        }
-
-        // Hilangkan musuh jika nyawa habis
-        if (enemy.health <= 0) {
+        // Tampilkan Hasil Pertandingan
+        if (enemy.dead) {
             document.querySelector('#game-result').innerHTML = 'YOU WIN!';
             document.querySelector('#game-result').style.display = 'flex';
-        } else if (player.health <= 0) {
+        } else if (player.dead) {
             document.querySelector('#game-result').innerHTML = 'GAME OVER';
             document.querySelector('#game-result').style.display = 'flex';
         }
     }
+
+    // --- DETEKSI TABRAKAN (Hanya jika keduanya hidup) ---
+    if (player && enemy && !player.dead && !enemy.dead) {
+        // Player menyerang Enemy
+        if (player.isAttacking && rectangularCollision({ rectangle1: player, rectangle2: enemy })) {
+            player.isAttacking = false; 
+            enemy.takeDamage(5, 'enemy-health');
+        }
+
+        // Enemy menyerang Player
+        if (enemy.isAttacking && rectangularCollision({ rectangle1: enemy, rectangle2: player })) {
+            enemy.isAttacking = false;
+            player.takeDamage(3, 'player-health');
+        }
+    }
 }
 
+// --- INPUT KEYBOARD ---
 window.addEventListener('keydown', (event) => {
+    if (!player || player.dead) return;
+
     switch (event.key) {
         case 'd': keys.d.pressed = true; break;
         case 'a': keys.a.pressed = true; break;
         case 'w':
         case ' ': 
-            if (player && player.velocity.y === 0) player.velocity.y = -18; 
+            if (player.velocity.y === 0) player.velocity.y = -18; 
             break;
         case 'k': 
-            if (player) player.attack(); // Memanggil fungsi attack() dari classes.js
+            player.attack();
             break;
     }
 });

@@ -51,7 +51,8 @@ function startGame() {
             run: { imageSrc: './assets/images/Samurai_Commander/Run.png', framesMax: 8 },
             jump: { imageSrc: './assets/images/Samurai_Commander/Jump.png', framesMax: 7 },
             attack: { imageSrc: './assets/images/Samurai_Commander/Attack_1.png', framesMax: 4 },
-            hurt: { imageSrc: './assets/images/Samurai_Commander/Hurt.png', framesMax: 2 }
+            hurt: { imageSrc: './assets/images/Samurai_Commander/Hurt.png', framesMax: 2 },
+            dead: { imageSrc: './assets/images/Samurai_Commander/Dead.png', framesMax: 6}
         }
     });
 
@@ -61,7 +62,8 @@ function startGame() {
             idle: { imageSrc: './assets/images/Samurai_Commander/Idle.png', framesMax: 5 },
             run: { imageSrc: './assets/images/Samurai_Commander/Run.png', framesMax: 8 },
             attack: { imageSrc: './assets/images/Samurai_Commander/Attack_1.png', framesMax: 4 },
-            hurt: { imageSrc: './assets/images/Samurai_Commander/Hurt.png', framesMax: 2 }
+            hurt: { imageSrc: './assets/images/Samurai_Commander/Hurt.png', framesMax: 2 },
+            dead: { imageSrc: './assets/images/Samurai_Commander/Dead.png', framesMax: 6}
         }
     });
 
@@ -76,23 +78,27 @@ function animate() {
 
     // UPDATE PLAYER
     if (player) {
-        player.update();
-        player.velocity.x = 0;
+        if(!player.dead){
+            player.update();    
+            player.velocity=0;
+            if (keys.d.pressed) {
+                player.velocity.x = 7;
+                player.lastDirection = 'right';
+                player.switchSprite('run');
+            } else if (keys.a.pressed) {
+                player.velocity.x = -7;
+                player.lastDirection = 'left';
+                player.switchSprite('run');
+            } else {
+                player.switchSprite('idle');
+            }
 
-        if (keys.d.pressed) {
-            player.velocity.x = 7;
-            player.lastDirection = 'right';
-            player.switchSprite('run');
-        } else if (keys.a.pressed) {
-            player.velocity.x = -7;
-            player.lastDirection = 'left';
-            player.switchSprite('run');
-        } else {
-            player.switchSprite('idle');
+            if (player.velocity.y < 0 || player.velocity.y > 0) {
+                player.switchSprite('jump');
+            }
         }
-
-        if (player.velocity.y < 0 || player.velocity.y > 0) {
-            player.switchSprite('jump');
+        else{
+            player.update();
         }
     }
 
@@ -104,7 +110,7 @@ function animate() {
         // DETEKSI: Serangan Player mengenai Enemy
         if (player.isAttacking && rectangularCollision({ rectangle1: player, rectangle2: enemy })) {
             player.isAttacking = false; // Hindari damage berkali-kali dalam satu ayunan
-            enemy.takeDamage(10, 'enemy-health');
+            enemy.takeDamage(5, 'enemy-health');
             console.log("Player Hit Enemy!");
         }
 

@@ -7,6 +7,7 @@ class Sprite {
             this.loaded = true;
         };
         this.image.src = imageSrc;
+        this.dead = false;
     }
 
     draw() {
@@ -96,6 +97,13 @@ class Player {
     animateFrames() {
         this.framesElapsed++;
         if (this.framesElapsed % this.framesHold === 0) {
+            if (this.image === this.sprites.dead.image) {
+                if (this.framesCurrent < this.sprites.dead.framesMax - 1) {
+                    this.framesCurrent++;
+                }
+                return;
+            }
+
             if (this.framesCurrent < this.framesMax - 1) {
                 this.framesCurrent++;
             } else {
@@ -114,8 +122,17 @@ class Player {
     }
 
     takeDamage(amount, barId) {
+        if (this.dead) return; // Jika sudah mati, tidak bisa terkena damage lagi
+
         this.health -= amount;
-        if (this.health < 0) this.health = 0;
+        
+        if (this.health <= 0) {
+            this.health = 0;
+            this.dead = true;
+            this.switchSprite('dead');
+        } else {
+            this.switchSprite('hurt');
+        }
 
         const healthBarElement = document.getElementById(barId);
         if (healthBarElement) {
@@ -126,7 +143,16 @@ class Player {
     }
 
     switchSprite(spriteName) {
-        if (!this.sprites[spriteName]) return;
+        if (this.image === this.sprites.dead.image) {
+            if (this.framesCurrent === this.sprites.dead.framesMax - 1) this.dead = true;
+            return;
+        }
+
+        // Jika sedang animasi Hurt, jangan ganti dulu
+        if (this.image === this.sprites.hurt.image && 
+            this.framesCurrent < this.sprites.hurt.framesMax - 1) return;
+
+        // Jika sedang animasi Attack, jangan ganti dulu
         if (this.sprites.attack && this.image === this.sprites.attack.image && 
             this.framesCurrent < this.sprites.attack.framesMax - 1) return;
 
@@ -144,6 +170,10 @@ class Player {
         // Update posisi Hitbox (mengikuti arah hadap)
         this.attackBox.position.x = this.position.x + (this.lastDirection === 'right' ? 100 : -50);
         this.attackBox.position.y = this.position.y + 100;
+
+        if (this.dead) {
+            this.velocity.x = 0;
+        }
 
         // Batas Map
         if (this.position.x + this.velocity.x < 0) {

@@ -50,7 +50,8 @@ function startGame() {
             idle: { imageSrc: './assets/images/Samurai_Commander/Idle.png', framesMax: 5 },
             run: { imageSrc: './assets/images/Samurai_Commander/Run.png', framesMax: 8 },
             jump: { imageSrc: './assets/images/Samurai_Commander/Jump.png', framesMax: 7 },
-            attack: { imageSrc: './assets/images/Samurai_Commander/Attack_1.png', framesMax: 4 }
+            attack: { imageSrc: './assets/images/Samurai_Commander/Attack_1.png', framesMax: 4 },
+            hurt: { imageSrc: './assets/images/Samurai_Commander/Hurt.png', framesMax: 2 }
         }
     });
 
@@ -59,7 +60,8 @@ function startGame() {
         sprites: {
             idle: { imageSrc: './assets/images/Samurai_Commander/Idle.png', framesMax: 5 },
             run: { imageSrc: './assets/images/Samurai_Commander/Run.png', framesMax: 8 },
-            attack: { imageSrc: './assets/images/Samurai_Commander/Attack_1.png', framesMax: 4 } // Tambahkan attack untuk musuh
+            attack: { imageSrc: './assets/images/Samurai_Commander/Attack_1.png', framesMax: 4 },
+            hurt: { imageSrc: './assets/images/Samurai_Commander/Hurt.png', framesMax: 2 }
         }
     });
 

@@ -128,14 +128,25 @@ body {
 /* Tampilan HUD / UI Layer */
 #ui-layer {
     position: absolute;
-    top: 30px;
-    left: 30px;
+    top: 0;
+    left: 0;
+    width: 100%; /* Pastikan UI Layer selebar layar game */
+    padding: 30px; /* Jarak dari pinggir canvas */
+    box-sizing: border-box;
     z-index: 5;
-    pointer-events: none; /* Klik akan tembus ke game */
+    pointer-events: none;
+}
+
+.health-wrapper {
+    display: flex; /* Aktifkan mode baris */
+    justify-content: space-between; /* Dorong satu ke kiri, satu ke kanan */
+    align-items: flex-start;
+    width: 100%;
 }
 
 .health-container {
-    width: 350px;
+    width: 350px; /* Lebar bar masing-masing */
+    position: relative;
 }
 
 .health-label {
@@ -145,6 +156,10 @@ body {
     text-shadow: 3px 3px #000;
     font-weight: bold;
 }
+
+/* #enemy-health {
+    transition: width 0.4s ease-out;
+} */
 
 .health-bar-bg {
     width: 100%;

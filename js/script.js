@@ -5,18 +5,59 @@ const uiLayer = document.getElementById('ui-layer');
 const startBtn = document.getElementById('start-btn');
 const mapButtons = document.querySelectorAll('.map-btn');
 
+// Konfigurasi Database Karakter (Sesuaikan framesMax dengan aset aslimu)
+const characterData = {
+    'Samurai_Commander': { idle: 5, run: 8, jump: 7, attack: 4, hurt: 2, dead: 6, label: 'SAMURAI' },
+    'Knight_1': { idle: 4, run: 7, jump: 6, attack: 5, hurt: 2, dead: 6, label: 'KNIGHT' },
+    'Kitsune': { idle: 8, run: 8, jump: 10, attack: 10, hurt: 2, dead: 10, label: 'KITSUNE' },
+    'Red_Werewolf': { idle: 8, run: 9, jump: 11, attack: 6, hurt: 2, dead: 2, label: 'WEREWOLF' },
+    'Skeleton_Warrior': { idle: 7, run: 8, jump: 6, attack: 5, hurt: 2, dead: 4, label: 'SKELETON' }
+};
+
 let selectedMapSrc = 'map1.png';
+let selectedPlayerChar = 'Samurai_Commander';
+let selectedEnemyChar = 'Red_Werewolf';
+
 let backgroundSprite;
 let player;
 let enemy;
 
 const keys = {
     d: { pressed: false },
-    a: { pressed: false },
-    w: { pressed: false }
+    a: { pressed: false }
 };
 
-// Fungsi Deteksi Tabrakan (AABB Collision)
+// --- LOGIKA PEMILIHAN DI MENU ---
+
+// Pilih Map
+mapButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        mapButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedMapSrc = btn.getAttribute('data-map');
+    });
+});
+
+// Pilih Karakter Player
+document.querySelectorAll('#player-chars .char-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('#player-chars .char-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedPlayerChar = btn.getAttribute('data-char');
+    });
+});
+
+// Pilih Karakter Enemy
+document.querySelectorAll('#enemy-chars .char-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('#enemy-chars .char-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedEnemyChar = btn.getAttribute('data-char');
+    });
+});
+
+// --- HELPER FUNCTIONS ---
+
 function rectangularCollision({ rectangle1, rectangle2 }) {
     return (
         rectangle1.attackBox.position.x + rectangle1.attackBox.width >= rectangle2.position.x &&
@@ -26,17 +67,29 @@ function rectangularCollision({ rectangle1, rectangle2 }) {
     );
 }
 
-mapButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        mapButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedMapSrc = btn.getAttribute('data-map');
-    });
-});
+// Fungsi otomatis untuk generate path sprite berdasarkan nama folder
+function createSprites(charName) {
+    const config = characterData[charName];
+    const path = `./assets/images/${charName}`;
+    return {
+        idle: { imageSrc: `${path}/Idle.png`, framesMax: config.idle },
+        run: { imageSrc: `${path}/Run.png`, framesMax: config.run },
+        jump: { imageSrc: `${path}/Jump.png`, framesMax: config.jump },
+        attack: { imageSrc: `${path}/Attack_1.png`, framesMax: config.attack },
+        hurt: { imageSrc: `${path}/Hurt.png`, framesMax: config.hurt },
+        dead: { imageSrc: `${path}/Dead.png`, framesMax: config.dead }
+    };
+}
+
+// --- GAME ENGINE ---
 
 function startGame() {
     mainMenu.style.display = 'none';
     uiLayer.style.display = 'block';
+
+    // Update Label Nama di UI
+    document.getElementById('player-name').innerText = characterData[selectedPlayerChar].label;
+    document.getElementById('enemy-name').innerText = characterData[selectedEnemyChar].label;
 
     backgroundSprite = new Sprite({
         position: { x: 0, y: 0 },
@@ -45,25 +98,12 @@ function startGame() {
 
     player = new Player({
         position: { x: 100, y: 0 },
-        sprites: {
-            idle: { imageSrc: './assets/images/Samurai_Commander/Idle.png', framesMax: 5 },
-            run: { imageSrc: './assets/images/Samurai_Commander/Run.png', framesMax: 8 },
-            jump: { imageSrc: './assets/images/Samurai_Commander/Jump.png', framesMax: 7 },
-            attack: { imageSrc: './assets/images/Samurai_Commander/Attack_1.png', framesMax: 4 },
-            hurt: { imageSrc: './assets/images/Samurai_Commander/Hurt.png', framesMax: 2 },
-            dead: { imageSrc: './assets/images/Samurai_Commander/Dead.png', framesMax: 6 }
-        }
+        sprites: createSprites(selectedPlayerChar)
     });
 
     enemy = new Enemy({
         position: { x: 1100, y: 0 },
-        sprites: {
-            idle: { imageSrc: './assets/images/Samurai_Commander/Idle.png', framesMax: 5 },
-            run: { imageSrc: './assets/images/Samurai_Commander/Run.png', framesMax: 8 },
-            attack: { imageSrc: './assets/images/Samurai_Commander/Attack_1.png', framesMax: 4 },
-            hurt: { imageSrc: './assets/images/Samurai_Commander/Hurt.png', framesMax: 2 },
-            dead: { imageSrc: './assets/images/Samurai_Commander/Dead.png', framesMax: 6 }
-        }
+        sprites: createSprites(selectedEnemyChar)
     });
 
     animate();
@@ -75,11 +115,10 @@ function animate() {
 
     if (backgroundSprite) backgroundSprite.update();
 
-    // --- LOGIKA PLAYER ---
     if (player) {
         if (!player.dead) {
             player.update();    
-            player.velocity.x = 0; // Reset velocity setiap frame
+            player.velocity.x = 0;
 
             if (keys.d.pressed) {
                 player.velocity.x = 7;
@@ -93,25 +132,20 @@ function animate() {
                 player.switchSprite('idle');
             }
 
-            // Animasi Lompat
-            if (player.velocity.y !== 0) {
-                player.switchSprite('jump');
-            }
+            if (player.velocity.y !== 0) player.switchSprite('jump');
         } else {
-            // Player tetap update agar animasi Dead berjalan sampai frame terakhir
             player.update();
         }
     }
 
-    // --- LOGIKA ENEMY ---
     if (enemy) {
         if (!enemy.dead && !player.dead) {
             enemy.update(player);
         } else {
-            enemy.update(); // Tetap update untuk animasi Dead atau Idle saat menang
+            enemy.update();
         }
 
-        // Tampilkan Hasil Pertandingan
+        // Hasil Pertandingan
         if (enemy.dead) {
             document.querySelector('#game-result').innerHTML = 'YOU WIN!';
             document.querySelector('#game-result').style.display = 'flex';
@@ -121,15 +155,13 @@ function animate() {
         }
     }
 
-    // --- DETEKSI TABRAKAN (Hanya jika keduanya hidup) ---
+    // Deteksi Tabrakan
     if (player && enemy && !player.dead && !enemy.dead) {
-        // Player menyerang Enemy
         if (player.isAttacking && rectangularCollision({ rectangle1: player, rectangle2: enemy })) {
-            player.isAttacking = false; 
+            player.isAttacking = false;
             enemy.takeDamage(5, 'enemy-health');
         }
 
-        // Enemy menyerang Player
         if (enemy.isAttacking && rectangularCollision({ rectangle1: enemy, rectangle2: player })) {
             enemy.isAttacking = false;
             player.takeDamage(3, 'player-health');
@@ -137,7 +169,8 @@ function animate() {
     }
 }
 
-// --- INPUT KEYBOARD ---
+// --- INPUTS ---
+
 window.addEventListener('keydown', (event) => {
     if (!player || player.dead) return;
 

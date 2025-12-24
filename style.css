@@ -175,3 +175,23 @@ body {
     background-color: #2ecc71; /* Hijau */
     transition: width 0.4s ease-in-out, background-color 0.4s;
 }
+
+.char-grid {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.char-btn {
+    padding: 8px 15px;
+    cursor: pointer;
+    background: #2c3e50;
+    color: white;
+    border: 2px solid transparent;
+}
+
+.char-btn.active {
+    border-color: #f1c40f;
+    background: #34495e;
+}

@@ -11,45 +11,57 @@
         <div id="ui-layer" style="display: none;">
             <div class="health-wrapper">
                 <div class="health-container">
-                    <div class="health-label">SAMURAI</div>
+                    <div id="player-name" class="health-label">SAMURAI</div>
                     <div class="health-bar-bg">
                         <div id="player-health" class="health-bar-fill"></div>
                     </div>
                 </div>
 
                 <div class="health-container">
-                    <div class="health-label" style="text-align: right;">ENEMY</div>
+                    <div id="enemy-name" class="health-label" style="text-align: right;">ENEMY</div>
                     <div class="health-bar-bg">
                         <div id="enemy-health" class="health-bar-fill" style="background-color: #e74c3c; width: 100%;"></div>
                     </div>
                 </div>
             </div>    
 
-            <div id="game-result" style="
-                position: absolute; 
-                color: white; 
-                display: none; 
-                align-items: center; 
-                justify-content: center; 
-                top: 0; right: 0; bottom: 0; left: 0; 
-                font-size: 4rem; 
-                text-shadow: 5px 5px #000;
-                font-weight: bold;
-                z-index: 10;">
-                TIE
-            </div>
+            <div id="game-result">TIE</div>
         </div>
 
         <div id="main-menu" class="overlay">
             <h1 class="game-title">MINI PIXEL WARRIOR</h1>
             
             <div id="map-selection">
-                <h2 class="sub-title">PILIH LOKASI PERTEMPURAN:</h2>
+                <h2 class="sub-title">1. PILIH LOKASI PERTEMPURAN:</h2>
                 <div class="map-grid">
                     <button class="map-btn active" data-map="map1.png">Himeji Forest</button>
-                    <button class="map-btn" data-map="map2.png">Ethernal Eden Garden</button>
+                    <button class="map-btn" data-map="map2.png">Ethernal Eden</button>
                     <button class="map-btn" data-map="map3.png">Nobunaga Castle</button>
-                    <button class="map-btn" data-map="map4.png">Ruins of Astra Temple</button>
+                    <button class="map-btn" data-map="map4.png">Ruins of Astra</button>
+                </div>
+            </div>
+
+            <div id="character-selection">
+                <div class="selection-row">
+                    <h2 class="sub-title">2. PILIH HERO:</h2>
+                    <div class="char-grid" id="player-chars">
+                        <button class="char-btn active" data-char="Samurai_Commander">Samurai</button>
+                        <button class="char-btn" data-char="Knight_1">Knight</button>
+                        <button class="char-btn" data-char="Kitsune">Kitsune</button>
+                        <button class="char-btn" data-char="Red_Werewolf">Werewolf</button>
+                        <button class="char-btn" data-char="Skeleton_Warrior">Skeleton</button>
+                    </div>
+                </div>
+
+                <div class="selection-row">
+                    <h2 class="sub-title">3. PILIH MUSUH:</h2>
+                    <div class="char-grid" id="enemy-chars">
+                        <button class="char-btn" data-char="Samurai_Commander">Samurai</button>
+                        <button class="char-btn" data-char="Knight_1">Knight</button>
+                        <button class="char-btn" data-char="Kitsune">Kitsune</button>
+                        <button class="char-btn active" data-char="Red_Werewolf">Werewolf</button>
+                        <button class="char-btn" data-char="Skeleton_Warrior">Skeleton</button>
+                    </div>
                 </div>
             </div>
 

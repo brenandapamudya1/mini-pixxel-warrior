@@ -1,11 +1,36 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+
+// --- ELEMENT NAVIGASI & LAYAR ---
 const mainMenu = document.getElementById('main-menu');
+const initInteraction = document.getElementById('init-interaction');
+const actualMenu = document.getElementById('actual-menu');
+const setupScreen = document.getElementById('setup-screen');
+const optionsScreen = document.getElementById('options-screen');
 const uiLayer = document.getElementById('ui-layer');
-const startBtn = document.getElementById('start-btn');
+const postGameUI = document.getElementById('post-game-ui');
+
+// --- TOMBOL ---
+const enterGameBtn = document.getElementById('enter-game-btn'); // Tombol Masuk Awal
+const toSetupBtn = document.getElementById('to-setup-btn');
+const optionsBtn = document.getElementById('options-btn');
+const backToHomeBtn = document.getElementById('back-to-home');
+const closeOptionsBtn = document.getElementById('close-options');
+const startGameBtn = document.getElementById('start-game-btn');
+const restartBtn = document.getElementById('restart-btn');
 const mapButtons = document.querySelectorAll('.map-btn');
 
-// Konfigurasi Database Karakter (Sesuaikan framesMax dengan aset aslimu)
+// --- PENGATURAN DATA & AUDIO ---
+const bgm = new Audio('./assets/audio/TitikNadir.mp3');
+bgm.loop = true;
+bgm.volume = 1; // Default volume 50%
+
+let attackKey = 'k';
+let isChangingKey = false;
+let gameDifficulty = 'normal';
+let isMuted = false;
+
+// Database Karakter
 const characterData = {
     'Samurai_Commander': { idle: 5, run: 8, jump: 7, attack: 4, hurt: 2, dead: 6, label: 'SAMURAI' },
     'Knight_1': { idle: 4, run: 7, jump: 6, attack: 5, hurt: 2, dead: 6, label: 'KNIGHT' },
@@ -21,15 +46,81 @@ let selectedEnemyChar = 'Red_Werewolf';
 let backgroundSprite;
 let player;
 let enemy;
+let animationId;
 
 const keys = {
     d: { pressed: false },
     a: { pressed: false }
 };
 
-// --- LOGIKA PEMILIHAN DI MENU ---
+// --- LOGIKA INITIAL INTERACTION (KLIK UNTUK MASUK) ---
 
-// Pilih Map
+enterGameBtn.addEventListener('click', () => {
+    // Jalankan Musik
+    bgm.play().catch(err => console.log("Menunggu interaksi user untuk audio."));
+    
+    // Transisi tampilan
+    initInteraction.style.display = 'none';
+    actualMenu.style.display = 'flex';
+});
+
+// --- LOGIKA NAVIGASI ---
+
+toSetupBtn.addEventListener('click', () => {
+    mainMenu.style.display = 'none';
+    setupScreen.style.display = 'flex';
+});
+
+optionsBtn.addEventListener('click', () => {
+    mainMenu.style.display = 'none';
+    optionsScreen.style.display = 'flex';
+});
+
+backToHomeBtn.addEventListener('click', () => {
+    setupScreen.style.display = 'none';
+    mainMenu.style.display = 'flex';
+});
+
+closeOptionsBtn.addEventListener('click', () => {
+    optionsScreen.style.display = 'none';
+    mainMenu.style.display = 'flex';
+});
+
+startGameBtn.addEventListener('click', () => {
+    setupScreen.style.display = 'none';
+    startGame();
+});
+
+restartBtn.addEventListener('click', () => {
+    location.reload();
+});
+
+// --- LOGIKA PENGATURAN ---
+
+document.getElementById('bgm-slider').addEventListener('input', (e) => {
+    bgm.volume = e.target.value;
+    isMuted = e.target.value == 0;
+    document.getElementById('mute-btn').innerText = isMuted ? "UNMUTE" : "MUTE";
+});
+
+document.getElementById('mute-btn').addEventListener('click', (e) => {
+    isMuted = !isMuted;
+    bgm.muted = isMuted;
+    e.target.innerText = isMuted ? "UNMUTE" : "MUTE";
+});
+
+document.getElementById('difficulty-select').addEventListener('change', (e) => {
+    gameDifficulty = e.target.value;
+});
+
+const changeKeyBtn = document.getElementById('change-key-btn');
+changeKeyBtn.addEventListener('click', () => {
+    isChangingKey = true;
+    changeKeyBtn.innerText = "TEKAN TOMBOL BARU...";
+});
+
+// --- LOGIKA PEMILIHAN ---
+
 mapButtons.forEach(btn => {
     btn.addEventListener('click', () => {
         mapButtons.forEach(b => b.classList.remove('active'));
@@ -38,7 +129,6 @@ mapButtons.forEach(btn => {
     });
 });
 
-// Pilih Karakter Player
 document.querySelectorAll('#player-chars .char-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('#player-chars .char-btn').forEach(b => b.classList.remove('active'));
@@ -47,7 +137,6 @@ document.querySelectorAll('#player-chars .char-btn').forEach(btn => {
     });
 });
 
-// Pilih Karakter Enemy
 document.querySelectorAll('#enemy-chars .char-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('#enemy-chars .char-btn').forEach(b => b.classList.remove('active'));
@@ -56,7 +145,7 @@ document.querySelectorAll('#enemy-chars .char-btn').forEach(btn => {
     });
 });
 
-// --- HELPER FUNCTIONS ---
+// --- CORE GAME ENGINE ---
 
 function rectangularCollision({ rectangle1, rectangle2 }) {
     return (
@@ -67,7 +156,6 @@ function rectangularCollision({ rectangle1, rectangle2 }) {
     );
 }
 
-// Fungsi otomatis untuk generate path sprite berdasarkan nama folder
 function createSprites(charName) {
     const config = characterData[charName];
     const path = `./assets/images/${charName}`;
@@ -81,13 +169,11 @@ function createSprites(charName) {
     };
 }
 
-// --- GAME ENGINE ---
-
 function startGame() {
-    mainMenu.style.display = 'none';
     uiLayer.style.display = 'block';
+    document.getElementById('game-result').style.display = 'none';
+    postGameUI.style.display = 'none';
 
-    // Update Label Nama di UI
     document.getElementById('player-name').innerText = characterData[selectedPlayerChar].label;
     document.getElementById('enemy-name').innerText = characterData[selectedEnemyChar].label;
 
@@ -101,16 +187,21 @@ function startGame() {
         sprites: createSprites(selectedPlayerChar)
     });
 
+    let enemySpeed = 2.5;
+    if (gameDifficulty === 'easy') enemySpeed = 1.5;
+    if (gameDifficulty === 'hard') enemySpeed = 4.2;
+
     enemy = new Enemy({
         position: { x: 1100, y: 0 },
         sprites: createSprites(selectedEnemyChar)
     });
+    enemy.speed = enemySpeed;
 
     animate();
 }
 
 function animate() {
-    window.requestAnimationFrame(animate);
+    animationId = window.requestAnimationFrame(animate);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (backgroundSprite) backgroundSprite.update();
@@ -131,7 +222,6 @@ function animate() {
             } else {
                 player.switchSprite('idle');
             }
-
             if (player.velocity.y !== 0) player.switchSprite('jump');
         } else {
             player.update();
@@ -145,23 +235,19 @@ function animate() {
             enemy.update();
         }
 
-        // Hasil Pertandingan
-        if (enemy.dead) {
-            document.querySelector('#game-result').innerHTML = 'YOU WIN!';
-            document.querySelector('#game-result').style.display = 'flex';
-        } else if (player.dead) {
-            document.querySelector('#game-result').innerHTML = 'GAME OVER';
-            document.querySelector('#game-result').style.display = 'flex';
+        if (enemy.dead || player.dead) {
+            const resultDiv = document.querySelector('#game-result');
+            resultDiv.innerHTML = enemy.dead ? 'YOU WIN!' : 'GAME OVER';
+            resultDiv.style.display = 'flex';
+            postGameUI.style.display = 'block';
         }
     }
 
-    // Deteksi Tabrakan
     if (player && enemy && !player.dead && !enemy.dead) {
         if (player.isAttacking && rectangularCollision({ rectangle1: player, rectangle2: enemy })) {
             player.isAttacking = false;
             enemy.takeDamage(5, 'enemy-health');
         }
-
         if (enemy.isAttacking && rectangularCollision({ rectangle1: enemy, rectangle2: player })) {
             enemy.isAttacking = false;
             player.takeDamage(3, 'player-health');
@@ -169,29 +255,35 @@ function animate() {
     }
 }
 
-// --- INPUTS ---
+// --- INPUT HANDLER ---
 
 window.addEventListener('keydown', (event) => {
+    if (isChangingKey) {
+        attackKey = event.key.toLowerCase();
+        document.getElementById('current-attack-key').innerText = attackKey.toUpperCase();
+        changeKeyBtn.innerText = "GANTI TOMBOL SERANG";
+        isChangingKey = false;
+        return;
+    }
+
     if (!player || player.dead) return;
 
-    switch (event.key) {
+    switch (event.key.toLowerCase()) {
         case 'd': keys.d.pressed = true; break;
         case 'a': keys.a.pressed = true; break;
         case 'w':
         case ' ': 
             if (player.velocity.y === 0) player.velocity.y = -18; 
             break;
-        case 'k': 
+        case attackKey: 
             player.attack();
             break;
     }
 });
 
 window.addEventListener('keyup', (event) => {
-    switch (event.key) {
+    switch (event.key.toLowerCase()) {
         case 'd': keys.d.pressed = false; break;
         case 'a': keys.a.pressed = false; break;
     }
 });
-
-startBtn.addEventListener('click', startGame);

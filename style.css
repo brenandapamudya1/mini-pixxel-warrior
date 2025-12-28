@@ -1,4 +1,15 @@
 /* Reset dasar */
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%; /* Pastikan UI Layer selebar layar game */
+    padding: 30px; /* Jarak dari pinggir canvas */
+    box-sizing: border-box;
+    z-index: 5;
+    pointer-events: none;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -126,16 +137,6 @@ body {
 }
 
 /* Tampilan HUD / UI Layer */
-#ui-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%; /* Pastikan UI Layer selebar layar game */
-    padding: 30px; /* Jarak dari pinggir canvas */
-    box-sizing: border-box;
-    z-index: 5;
-    pointer-events: none;
-}
 
 .health-wrapper {
     display: flex; /* Aktifkan mode baris */
@@ -224,4 +225,45 @@ body {
     background: #7f8c8d;
     font-size: 0.8rem;
     margin-top: 10px;
+}
+
+#post-game-ui {
+    pointer-events: all; /* KEMBALIKAN kemampuan klik khusus untuk tombol ini */
+    z-index: 20;
+    position: relative;
+}
+
+canvas {
+    position: absolute;
+    z-index: 1;
+}
+
+#game-result {
+    /* Posisi di tengah atas */
+    position: absolute;
+    top: 15%; /* Jarak dari atas layar */
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Tampilan (Hidden secara default, nanti diubah ke flex oleh JS) */
+    display: none;
+    align-items: center;
+    justify-content: center;
+    
+    /* Gaya Teks Pixel */
+    color: #f1c40f; /* Warna kuning emas */
+    font-family: 'Courier New', Courier, monospace; /* Gunakan font pixel jika ada */
+    font-size: 80px;
+    font-weight: bold;
+    text-shadow: 5px 5px 0px #000, 
+                 -2px -2px 0px #000, 
+                  2px -2px 0px #000, 
+                 -2px 2px 0px #000;
+    
+    /* Agar tidak menghalangi klik ke tombol di bawahnya jika ada */
+    pointer-events: none; 
+    z-index: 15;
+    
+    /* Animasi sedikit agar lebih keren */
+    animation: bounce 0.5s infinite alternate;
 }

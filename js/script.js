@@ -92,7 +92,23 @@ startGameBtn.addEventListener('click', () => {
 });
 
 restartBtn.addEventListener('click', () => {
-    location.reload();
+    // 1. Hentikan animasi yang sedang berjalan
+    window.cancelAnimationFrame(animationId);
+
+    // 2. Sembunyikan layar Game Over dan UI Game
+    uiLayer.style.display = 'none';
+    postGameUI.style.display = 'none';
+    document.getElementById('game-result').style.display = 'none';
+
+    // 3. Tampilkan kembali layar Persiapan (Fase Pemilihan Karakter)
+    setupScreen.style.display = 'flex';
+
+    // 4. Reset variabel karakter agar bisa dibuat ulang (Instansi baru)
+    player = null;
+    enemy = null;
+
+    // 5. Bersihkan Canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
 
 // --- LOGIKA PENGATURAN ---
@@ -174,6 +190,11 @@ function startGame() {
     document.getElementById('game-result').style.display = 'none';
     postGameUI.style.display = 'none';
 
+    document.getElementById('player-health').style.width = '100%';
+    document.getElementById('enemy-health').style.width = '100%';
+
+    uiLayer.style.display = 'block';
+
     document.getElementById('player-name').innerText = characterData[selectedPlayerChar].label;
     document.getElementById('enemy-name').innerText = characterData[selectedEnemyChar].label;
 
@@ -245,18 +266,26 @@ function animate() {
         }
 
         // 3. Tampilkan UI Hasil Pertandingan
+        // if (enemy.health <= 0 || player.health <= 0) {
+        //     const resultDiv = document.querySelector('#game-result');
+            
+        //     // Logika teks kemenangan
+        //     if (enemy.health <= 0) {
+        //         resultDiv.innerHTML = 'YOU WIN!';
+        //     } else {
+        //         resultDiv.innerHTML = 'GAME OVER';
+        //     }
+            
+        //     resultDiv.style.display = 'flex';
+        //     postGameUI.style.display = 'block';
+        // }
         if (enemy.health <= 0 || player.health <= 0) {
             const resultDiv = document.querySelector('#game-result');
-            
-            // Logika teks kemenangan
-            if (enemy.health <= 0) {
-                resultDiv.innerHTML = 'YOU WIN!';
-            } else {
-                resultDiv.innerHTML = 'GAME OVER';
-            }
+            resultDiv.innerHTML = enemy.health <= 0 ? 'YOU WIN!' : 'GAME OVER';
             
             resultDiv.style.display = 'flex';
-            postGameUI.style.display = 'block';
+            uiLayer.style.display = 'block'; // Pastikan layernya aktif
+            postGameUI.style.display = 'block'; // Munculkan tombolnya
         }
     }
 

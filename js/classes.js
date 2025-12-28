@@ -120,7 +120,7 @@ class Player {
         setTimeout(() => {
             this.isAttacking = false;
         }, 100); 
-    }
+    }   
 
     takeDamage(amount, barId) {
         if (this.dead) return;
@@ -183,11 +183,9 @@ class Player {
 
         // Batasi pergerakan di dalam canvas
         if (this.position.x + this.velocity.x < 0) {
-            this.position.x = 0;
-            this.velocity.x = 0;
+            this.velocity.x = 0; // Hentikan velocity sebelum menambah posisi
         }
         if (this.position.x + this.width + this.velocity.x > canvas.width) {
-            this.position.x = canvas.width - this.width;
             this.velocity.x = 0;
         }
 

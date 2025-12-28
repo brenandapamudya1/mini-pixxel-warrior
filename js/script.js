@@ -21,7 +21,7 @@ const restartBtn = document.getElementById('restart-btn');
 const mapButtons = document.querySelectorAll('.map-btn');
 
 // --- PENGATURAN DATA & AUDIO ---
-const bgm = new Audio('./assets/audio/TitikNadir.mp3');
+const bgm = new Audio('assets/audio/TItikNadir.mp3');
 bgm.loop = true;
 bgm.volume = 1; // Default volume 50%
 
@@ -244,15 +244,33 @@ function animate() {
     }
 
     if (player && enemy && !player.dead && !enemy.dead) {
-        if (player.isAttacking && rectangularCollision({ rectangle1: player, rectangle2: enemy })) {
-            player.isAttacking = false;
-            enemy.takeDamage(5, 'enemy-health');
-        }
-        if (enemy.isAttacking && rectangularCollision({ rectangle1: enemy, rectangle2: player })) {
-            enemy.isAttacking = false;
-            player.takeDamage(3, 'player-health');
-        }
+    
+    // PLAYER MENYERANG MUSUH
+    // Tambahkan pengecekan frame tertentu agar damage pas di ayunan pedang
+    if (
+        player.isAttacking && 
+        player.framesCurrent === 2 && // Damage hanya keluar di frame ke-2 animasi attack
+        rectangularCollision({ rectangle1: player, rectangle2: enemy })
+    ) {
+        player.isAttacking = false; // Reset agar tidak kena damage berkali-kali dalam satu ayunan
+        enemy.takeDamage(5, 'enemy-health');
     }
+
+    // MUSUH MENYERANG PLAYER
+    if (
+        enemy.isAttacking && 
+        enemy.framesCurrent === 2 && // Damage hanya keluar di frame ke-2 animasi attack musuh
+        rectangularCollision({ rectangle1: enemy, rectangle2: player })
+    ) {
+        enemy.isAttacking = false; // Kunci serangannya setelah satu kali kena
+        player.takeDamage(3, 'player-health');
+        
+        // Opsional: Beri sedikit jeda agar musuh tidak langsung menyerang lagi dalam milidetik yang sama
+        setTimeout(() => {
+            enemy.isAttacking = false;
+        }, 500);
+    }
+}
 }
 
 // --- INPUT HANDLER ---

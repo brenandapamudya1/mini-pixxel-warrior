@@ -146,7 +146,11 @@ class Player {
     switchSprite(spriteName) {
         // Proteksi: Jangan ganti jika karakter sudah mati
         if (this.image === this.sprites.dead.image) {
-            if (this.framesCurrent === this.sprites.dead.framesMax - 1) this.dead = true;
+            if (this.framesCurrent < this.sprites.dead.framesMax - 1){
+                //Biarkan
+            } else {
+                this.dead = true;
+            }
             return;
         }
 
@@ -169,7 +173,7 @@ class Player {
         this.draw();
         this.animateFrames();
         
-        if (!this.dead) {
+        if (!this.dead && this.health > 0) {
             // Update Attackbox mengikuti arah hadap
             this.attackBox.position.x = this.position.x + (this.lastDirection === 'right' ? 100 : -50);
             this.attackBox.position.y = this.position.y + 100;

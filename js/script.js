@@ -207,10 +207,11 @@ function animate() {
     if (backgroundSprite) backgroundSprite.update();
 
     if (player) {
-        if (!player.dead) {
-            player.update();    
+        player.update();
+        if (player.health <= 0) {
+            player.switchSprite('dead');
+        } else {
             player.velocity.x = 0;
-
             if (keys.d.pressed) {
                 player.velocity.x = 7;
                 player.lastDirection = 'right';
@@ -222,22 +223,38 @@ function animate() {
             } else {
                 player.switchSprite('idle');
             }
-            if (player.velocity.y !== 0) player.switchSprite('jump');
-        } else {
-            player.update();
+            if (player.velocity.y < 0) {
+                player.switchSprite('jump');
+            }
         }
     }
 
     if (enemy) {
-        if (!enemy.dead && !player.dead) {
+        // 1. Cek jika musuh baru saja habis darahnya (Picu animasi mati)
+        if (enemy.health <= 0) {
+            enemy.switchSprite('dead');
+        } 
+        
+        // 2. Jalankan update AI/Pergerakan HANYA jika player dan enemy masih hidup
+        if (enemy.health > 0 && player.health > 0) {
             enemy.update(player);
         } else {
+            // Jika salah satu mati, tetap panggil update() tanpa koordinat player 
+            // agar animasi (kematian/idle) tetap berjalan di tempat
             enemy.update();
         }
 
-        if (enemy.dead || player.dead) {
+        // 3. Tampilkan UI Hasil Pertandingan
+        if (enemy.health <= 0 || player.health <= 0) {
             const resultDiv = document.querySelector('#game-result');
-            resultDiv.innerHTML = enemy.dead ? 'YOU WIN!' : 'GAME OVER';
+            
+            // Logika teks kemenangan
+            if (enemy.health <= 0) {
+                resultDiv.innerHTML = 'YOU WIN!';
+            } else {
+                resultDiv.innerHTML = 'GAME OVER';
+            }
+            
             resultDiv.style.display = 'flex';
             postGameUI.style.display = 'block';
         }
